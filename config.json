@@ -1,0 +1,23 @@
+{
+  "zip_code": "12540",
+  "tracking": {
+    "enabled": true,
+    "daily_check_time": "08:05 AM EST",
+    "alert_threshold": 0.125
+  },
+  "data_sources": {
+    "primary": "Bankrate API",
+    "fallback": "Chase Bank",
+    "enabled_sources": [
+      "bankrate",
+      "chase"
+    ]
+  },
+  "notification": {
+    "enabled": false,
+    "email": null,
+    "alert_on_drop": true,
+    "alert_on_rise": false,
+    "minimum_change": 0.0625
+  }
+}
