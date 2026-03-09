@@ -3,6 +3,7 @@
 ![Python Version](https://img.shields.io/badge/python-3.7+-blue.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Maintenance](https://img.shields.io/badge/maintained-yes-brightgreen.svg)
+![GitHub tag](https://img.shields.io/github/v/tag/seang1121/Mortgage-Interest-Rate-Lookup)
 
 **Daily mortgage rate tracking with historical logging and trend analysis**
 
