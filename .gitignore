@@ -30,3 +30,7 @@ tracker.log
 
 # Personal config (if you add sensitive data)
 config.local.json
+
+# Claude Code
+.claude/
+CLAUDE.local.md
