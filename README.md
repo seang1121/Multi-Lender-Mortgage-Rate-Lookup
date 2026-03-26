@@ -22,6 +22,27 @@ The script hits every lender simultaneously using stealth browser automation, ex
 
 ---
 
+## How We Beat Anti-Bot Protection
+
+Major banks don't want you scraping their rate pages. They use JavaScript-rendered SPAs, Cloudflare protection, bot detection fingerprinting, and rate-limiting to block automated access. A simple `requests.get()` or even a standard headless browser will get blocked, served empty pages, or fed placeholder text like `X.XXX%`.
+
+**How this tool gets through:**
+
+| Challenge | How We Solve It |
+|-----------|----------------|
+| JavaScript-rendered rates | **patchright** — a stealth-patched Chromium that renders full JS like a real browser |
+| Bot detection fingerprinting | patchright spoofs browser fingerprints (WebGL, canvas, navigator properties) to look like a real user |
+| Rate-limiting / IP blocking | Batches of 4 lenders at a time with retry logic — never hammers a single site |
+| ZIP code gates (Chase) | Auto-detects ZIP input fields, fills them, and clicks "See Rates" before extracting |
+| Session-dependent rates (BofA) | Uses specific promo URLs that serve rates on first load without multi-step navigation |
+| Cloudflare challenges | patchright bypasses standard Cloudflare browser checks without needing API keys |
+
+Every lender required a different approach to crack. The URLs, wait times, and extraction patterns in this script are the result of testing each bank individually until we found what works.
+
+**If a lender stops working:** Bank websites change their structure regularly. If a lender starts returning empty results, use `--headed` mode to open a visible browser and see what changed. Then update the URL or regex pattern accordingly.
+
+---
+
 ## What Gets Tracked
 
 ### 10 Lenders
@@ -144,10 +165,10 @@ If neither is set, defaults to `12540` (LaGrangeville, NY).
 ### Run
 
 ```bash
-# Headless mode — scrapes 6 automated lenders + 2 benchmarks
+# Headless mode — scrapes all 10 lenders + 2 benchmarks
 python mortgage_rate_report.py
 
-# Headed mode — opens a visible browser to attempt ALL 13 lenders
+# Headed mode — visible browser, useful for debugging
 python mortgage_rate_report.py --headed
 
 # Override ZIP code
@@ -202,14 +223,10 @@ post_to_channel(result)
 
 ## Headless vs Headed Mode
 
-All 10 lenders are fully automated and work in headless mode. The `--headed` flag is still available if you want to watch the browser work or debug scraping issues.
-
-| Mode | Command | What happens |
+| Mode | Command | When to use |
 |------|---------|-------------|
-| **Headless** (default) | `python mortgage_rate_report.py` | Scrapes all 10 lenders + 2 benchmarks in the background. Best for cron jobs, servers, and automation. |
-| **Headed** | `python mortgage_rate_report.py --headed` | Opens a **visible browser window** so you can watch the scraping. Useful for debugging. |
-
-Lenders are scraped in batches of 4 to avoid overwhelming your machine. Each failed lender gets automatic retries with increasing wait times before being marked as unavailable.
+| **Headless** (default) | `python mortgage_rate_report.py` | Daily automation, cron jobs, servers. All 10 lenders work headless. |
+| **Headed** | `python mortgage_rate_report.py --headed` | Debugging. Opens a visible browser so you can watch what each bank page is doing. Use this when a lender stops returning data — you'll see exactly what changed. |
 
 ---
 
