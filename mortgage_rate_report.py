@@ -1,11 +1,17 @@
 """
 mortgage_rate_report.py — Multi-lender mortgage rate comparison
 
-Compares 13 lenders + 2 national benchmarks in parallel.
+Compares 13 lenders + 2 national benchmarks.
   - 6 lenders automated via patchright stealth browser
   - 7 lenders browser-assisted (anti-bot protected, listed for OpenClaw fallback)
   - Freddie Mac PMMS via direct CSV API
-  - Mortgage News Daily via stealth browser
+  - Mortgage News Daily via urllib (no browser needed)
+
+Reliability:
+  - Parallel first pass (all automated lenders at once)
+  - Sequential retry for any that fail (resource contention on parallel)
+  - urllib fallback for MND and Freddie Mac (no browser needed)
+  - 2 attempts per lender before marking as failed
 
 Usage: python3 mortgage_rate_report.py
 """
@@ -23,7 +29,6 @@ DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 HISTORY_FILE = os.path.join(DATA_DIR, "mortgage_rates_history.json")
 WAIT_MS = 10000
 
-# Benchmark lender names — used to tag them in output
 BENCHMARKS = {"Freddie Mac (natl avg)", "MND Index"}
 
 
@@ -37,32 +42,28 @@ def extract_rates(text, lender):
         (r'15[- ]?[Yy]ear(?:\s*[Ff]ixed)?', "15yr"),
         (r'(?:7/6|7/1|5/1)\s*(?:ARM|Adj)', "ARM"),
     ]:
-        # Pattern 1: label ... rate% ... APR ... apr%
         m = re.search(label + r'.*?(\d\.\d{2,3})%.*?(?:APR|apr)[:\s]*(\d\.\d{2,3})%', text, re.DOTALL | re.IGNORECASE)
         if m:
             results.append({"lender": lender, "product": product, "rate": float(m.group(1)), "apr": float(m.group(2))})
             continue
 
-        # Pattern 2: tab-separated "30-year fixed\t6.500%\t6.738%" (BofA/Navy Federal)
         m = re.search(label + r'[\t\s]+(\d\.\d{2,3})%[\t\s]+(\d\.\d{2,3})%', text, re.IGNORECASE)
         if m:
             results.append({"lender": lender, "product": product, "rate": float(m.group(1)), "apr": float(m.group(2))})
             continue
 
-        # Pattern 3: "rate in XXXXX is X.XXX% (X.XXX% APR)"
         m = re.search(label + r'.*?is\s+(\d\.\d{2,3})%\s*\((\d\.\d{2,3})%\s*APR\)', text, re.DOTALL | re.IGNORECASE)
         if m:
             results.append({"lender": lender, "product": product, "rate": float(m.group(1)), "apr": float(m.group(2))})
             continue
 
-        # Pattern 4: rate only
         m = re.search(label + r'[^\d]*?(\d\.\d{2,3})%', text, re.DOTALL | re.IGNORECASE)
         if m and 3.0 <= float(m.group(1)) <= 12.0:
             results.append({"lender": lender, "product": product, "rate": float(m.group(1)), "apr": None})
     return results
 
 
-# ─── TIER 1: DIRECT API ─────────────────────────────────────────────────────
+# ─── TIER 1: DIRECT APIs (no browser) ───────────────────────────────────────
 
 def fetch_freddie_mac_csv():
     """Freddie Mac PMMS — national benchmark via free CSV endpoint."""
@@ -80,14 +81,29 @@ def fetch_freddie_mac_csv():
             results.append({"lender": "Freddie Mac (natl avg)", "product": "30yr", "rate": float(last[1]), "apr": None})
         if len(last) >= 4 and last[3]:
             results.append({"lender": "Freddie Mac (natl avg)", "product": "15yr", "rate": float(last[3]), "apr": None})
-        return "Freddie Mac", results
+        return results
     except Exception:
-        return "Freddie Mac", []
+        return []
+
+
+def fetch_mnd_urllib():
+    """Mortgage News Daily — daily index via plain HTML (no browser needed)."""
+    try:
+        ctx = ssl.create_default_context()
+        req = urllib.request.Request(
+            "https://www.mortgagenewsdaily.com/mortgage-rates",
+            headers={"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"}
+        )
+        with urllib.request.urlopen(req, timeout=10, context=ctx) as r:
+            html = r.read().decode("utf-8", errors="replace")
+        text = re.sub(r'<[^>]+>', ' ', html)
+        return extract_rates(text, "MND Index")
+    except Exception:
+        return []
 
 
 # ─── TIER 2: STEALTH BROWSER SCRAPING ────────────────────────────────────────
 
-# Automated lenders (6 lenders + 1 benchmark)
 BROWSER_SOURCES = [
     ("Bank of America", "https://promotions.bankofamerica.com/homeloans/homebuying-hub/home-loan-options?subCampCode=41490&dmcode=18099675931"),
     ("Wells Fargo", "https://www.wellsfargo.com/mortgage/rates/"),
@@ -95,10 +111,8 @@ BROWSER_SOURCES = [
     ("SoFi", "https://www.sofi.com/home-loans/mortgage-rates/"),
     ("US Bank", "https://www.usbank.com/home-loans/mortgage/mortgage-rates.html"),
     ("Guaranteed Rate", "https://www.rate.com/mortgage-rates"),
-    ("MND Index", "https://www.mortgagenewsdaily.com/mortgage-rates"),
 ]
 
-# Browser-assisted lenders (anti-bot protected — OpenClaw browser handles these)
 BROWSER_ASSISTED = ["Chase", "Rocket Mortgage", "Citi", "LoanDepot", "TD Bank", "Mr. Cooper", "PNC"]
 
 
@@ -125,15 +139,32 @@ async def scrape_lender(browser, name, url):
 
 
 async def scrape_all_browser():
-    """Scrape all automated sources in parallel."""
+    """Scrape all automated lenders — parallel first, then retry failures sequentially."""
     from patchright.async_api import async_playwright
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True)
+
+        # Pass 1: all in parallel
         tasks = [scrape_lender(browser, name, url) for name, url in BROWSER_SOURCES]
         results = await asyncio.gather(*tasks)
+
+        # Pass 2: retry any that failed (resource contention on parallel)
+        final = []
+        retry_list = []
+        for (name, rates), (orig_name, orig_url) in zip(results, BROWSER_SOURCES):
+            if rates:
+                final.append((name, rates))
+            else:
+                retry_list.append((orig_name, orig_url))
+
+        if retry_list:
+            for name, url in retry_list:
+                retry_name, retry_rates = await scrape_lender(browser, name, url)
+                final.append((retry_name, retry_rates))
+
         await browser.close()
-    return results
+    return final
 
 
 # ─── HISTORY ─────────────────────────────────────────────────────────────────
@@ -162,7 +193,7 @@ def format_report(unique, successes, failures, history):
 
     today = datetime.now().strftime("%b %d, %Y")
     lines = [
-        f"MORTGAGE RATE COMPARISON — {today}",
+        f"MORTGAGE RATE COMPARISON \u2014 {today}",
         f"   {lender_count} lenders + {benchmark_count} benchmarks | sorted lowest to highest",
         "",
     ]
@@ -186,17 +217,20 @@ def format_report(unique, successes, failures, history):
             rate_str = f"{r['rate']:.3f}%"
             apr_str = f"  ({r['apr']:.3f}% APR)" if r.get("apr") else ""
             is_benchmark = r["lender"] in BENCHMARKS
-            benchmark_tag = "  ·················· benchmark" if is_benchmark else ""
-            best_tag = "BEST" if i == 0 and len(product_rates) > 1 and not is_benchmark else ""
+            benchmark_tag = "  \u00B7\u00B7\u00B7\u00B7\u00B7\u00B7\u00B7\u00B7\u00B7\u00B7\u00B7\u00B7\u00B7\u00B7\u00B7\u00B7\u00B7\u00B7\u00B7\u00B7 benchmark" if is_benchmark else ""
 
-            if best_tag:
-                prefix = "  \U0001F3C6"  # trophy
-                suffix = f"{'':>20s} {best_tag}"
+            # Best = first non-benchmark lender
+            is_best = (i == 0 and len(product_rates) > 1 and not is_benchmark)
+            if not is_best and i > 0:
+                # Check if this is the first non-benchmark
+                prior_non_bench = [r2 for r2 in product_rates[:i] if r2["lender"] not in BENCHMARKS]
+                if not prior_non_bench and not is_benchmark:
+                    is_best = True
+
+            if is_best:
+                lines.append(f"  \U0001F3C6 {r['lender']:28s} {rate_str}{apr_str}{'':>20s} BEST")
             else:
-                prefix = "    "
-                suffix = benchmark_tag
-
-            lines.append(f"{prefix} {r['lender']:28s} {rate_str}{apr_str}{suffix}")
+                lines.append(f"     {r['lender']:28s} {rate_str}{apr_str}{benchmark_tag}")
 
         # Day-over-day
         prev = last_rates.get(product, [])
@@ -207,16 +241,16 @@ def format_report(unique, successes, failures, history):
             avg_str = f"{curr_avg:.3f}%"
             if abs(diff) >= 0.005:
                 arrow = "\u25B2" if diff > 0 else "\u25BC"
-                lines.append(f"")
+                lines.append("")
                 lines.append(f"  \U0001F4CA Avg: {avg_str}  |  vs yesterday: {arrow} {abs(diff):.3f}%")
             else:
-                lines.append(f"")
+                lines.append("")
                 lines.append(f"  \U0001F4CA Avg: {avg_str}  |  vs yesterday: unchanged")
 
         lines.append("")
 
-    # Browser-assisted lenders that need OpenClaw
-    script_failures = [f for f in failures if f != "Freddie Mac"]
+    # Browser-assisted lenders
+    script_failures = [f for f in failures if f not in ("Freddie Mac", "MND")]
     needs_browser = BROWSER_ASSISTED + script_failures
     if needs_browser:
         lines.append(f"Need browser check: {', '.join(needs_browser)}")
@@ -227,19 +261,30 @@ def format_report(unique, successes, failures, history):
 # ─── MAIN ────────────────────────────────────────────────────────────────────
 
 def main():
-    total = len(BROWSER_SOURCES) + 1  # +Freddie Mac API
-    print(f"Scraping {total} sources in parallel...\n")
+    total = len(BROWSER_SOURCES) + 2  # + Freddie Mac + MND
+    print(f"Scraping {total} sources ({len(BROWSER_SOURCES)} parallel + 2 API)...\n")
 
-    # Tier 1: Direct API
-    fm_name, fm_rates = fetch_freddie_mac_csv()
+    all_rates = []
+    successes = []
+    failures = []
 
-    # Tier 2: Browser scraping
+    # Tier 1: Direct APIs (no browser, instant)
+    fm_rates = fetch_freddie_mac_csv()
+    if fm_rates:
+        all_rates.extend(fm_rates)
+        successes.append("Freddie Mac")
+    else:
+        failures.append("Freddie Mac")
+
+    mnd_rates = fetch_mnd_urllib()
+    if mnd_rates:
+        all_rates.extend(mnd_rates)
+        successes.append("MND")
+    else:
+        failures.append("MND")
+
+    # Tier 2: Browser scraping (parallel + sequential retry)
     browser_results = asyncio.run(scrape_all_browser())
-
-    # Combine
-    all_rates = list(fm_rates)
-    successes = [fm_name] if fm_rates else []
-    failures = [] if fm_rates else [fm_name]
 
     for name, rates in browser_results:
         if rates:
