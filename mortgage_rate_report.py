@@ -308,7 +308,7 @@ def format_report(unique, successes, failures, history):
                     is_best = True
 
             if is_best:
-                lines.append(f"  \U0001F3C6 {r['lender']:28s} {rate_str}{apr_str}{'':>20s} BEST")
+                lines.append(f"  >>> {r['lender']:28s} {rate_str}{apr_str}{'':>20s} BEST")
             else:
                 lines.append(f"     {r['lender']:28s} {rate_str}{apr_str}{benchmark_tag}")
 
@@ -320,12 +320,12 @@ def format_report(unique, successes, failures, history):
             diff = curr_avg - prev_avg
             avg_str = f"{curr_avg:.3f}%"
             if abs(diff) >= 0.005:
-                arrow = "\u25B2" if diff > 0 else "\u25BC"
+                arrow = "^" if diff > 0 else "v"
                 lines.append("")
-                lines.append(f"  \U0001F4CA Avg: {avg_str}  |  vs yesterday: {arrow} {abs(diff):.3f}%")
+                lines.append(f"  Avg: {avg_str}  |  vs yesterday: {arrow} {abs(diff):.3f}%")
             else:
                 lines.append("")
-                lines.append(f"  \U0001F4CA Avg: {avg_str}  |  vs yesterday: unchanged")
+                lines.append(f"  Avg: {avg_str}  |  vs yesterday: unchanged")
 
         lines.append("")
 
