@@ -1,7 +1,7 @@
 # Multi-Lender Mortgage Rate Lookup
 
 ## What This Does
-Scrapes mortgage rates from 13 lenders + 2 national benchmarks (Freddie Mac, Mortgage News Daily), ranks them lowest to highest, tracks day-over-day changes, outputs a clean text report.
+Scrapes mortgage rates from 10 lenders + 2 national benchmarks (Freddie Mac, Mortgage News Daily), ranks them lowest to highest, tracks day-over-day changes, outputs a clean text report.
 
 ## Quick Start
 ```bash
@@ -13,10 +13,9 @@ python mortgage_rate_report.py --zip 32224
 
 ## Architecture
 
-### Three Tiers of Data Fetching
+### Two Tiers of Data Fetching
 1. **Tier 1 — Direct APIs (no browser):** Freddie Mac CSV endpoint + Mortgage News Daily HTML via `urllib`. Fastest, most reliable.
-2. **Tier 2 — Stealth browser (headless):** 6 automated lenders via `patchright` (stealth Chromium). Parallel batches of 4, sequential retry on failure.
-3. **Tier 3 — Headed browser:** 7 anti-bot lenders (Chase, Rocket, Citi, etc.) only scraped with `--headed` flag. Requires a display.
+2. **Tier 2 — Stealth browser (headless):** 10 automated lenders via `patchright` (stealth Chromium). Parallel batches of 4, sequential retry on failure. All lenders work headless — no browser-assisted tier needed.
 
 ### ZIP Code Resolution
 Priority order: `--zip` CLI flag > `config.json` `zip_code` field > hardcoded default `32224`
@@ -43,7 +42,7 @@ Priority order: `--zip` CLI flag > `config.json` `zip_code` field > hardcoded de
 - **Output is plain text to stdout.** Designed to be piped to Discord/Slack/email/any automation.
 
 ## Known Limitations
-- Anti-bot lenders (Chase, Rocket, Citi, LoanDepot, TD Bank, Mr. Cooper, PNC) require `--headed` mode with a display
-- "30 seconds" runtime is happy-path only. With retries and headed mode, expect 1-3 minutes.
+- All 10 lenders work in headless mode. `--headed` is available for debugging but not required.
+- "30 seconds" runtime is happy-path only. With retries, expect 1-3 minutes.
 - Lender page structures change without notice — regex extraction may need updating
 - Emoji in output may not render in all terminals

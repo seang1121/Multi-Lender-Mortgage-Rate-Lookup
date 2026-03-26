@@ -1,9 +1,9 @@
 # Multi-Lender Mortgage Rate Lookup
 
-> Compare mortgage rates across **13 lenders** and **2 national benchmarks** in a single command. All major banks, credit unions, and online lenders — scraped in parallel, ranked lowest to highest, with day-over-day market tracking.
+> Compare mortgage rates across **10 lenders** and **2 national benchmarks** in a single command. All major banks, credit unions, and online lenders — scraped in parallel, ranked lowest to highest, with day-over-day market tracking.
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue)
-![Lenders](https://img.shields.io/badge/lenders-13-brightgreen)
+![Lenders](https://img.shields.io/badge/lenders-10-brightgreen)
 ![Benchmarks](https://img.shields.io/badge/benchmarks-2-blue)
 ![Schedule](https://img.shields.io/badge/runs-daily-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
@@ -16,7 +16,7 @@ Shopping for the best mortgage rate means opening a dozen bank websites, enterin
 
 ## The Solution
 
-One command. 13 lenders. 2 national benchmarks. Sorted best to worst. Typically completes in 30-90 seconds depending on network speed and lender response times.
+One command. 10 lenders. 2 national benchmarks. Sorted best to worst. Typically completes in 30-90 seconds depending on network speed and lender response times.
 
 The script hits every lender simultaneously using stealth browser automation, extracts the current rate and APR, compares them against Freddie Mac and Mortgage News Daily national averages, tracks how rates moved since yesterday, and gives you a clean ranked report you can pipe to Discord, Slack, email, or any automation pipeline.
 
@@ -24,26 +24,22 @@ The script hits every lender simultaneously using stealth browser automation, ex
 
 ## What Gets Tracked
 
-### 13 Lenders
+### 10 Lenders
 
-| # | Lender | Type | Method |
-|---|--------|------|--------|
-| 1 | **Bank of America** | Big 4 Bank | Automated |
-| 2 | **Wells Fargo** | Big 4 Bank | Automated |
-| 3 | **Chase** | Big 4 Bank | Browser-assisted |
-| 4 | **Citi** | Big 4 Bank | Browser-assisted |
-| 5 | **Navy Federal Credit Union** | Credit Union | Automated |
-| 6 | **SoFi** | Online Lender | Automated |
-| 7 | **Rocket Mortgage** | #1 Online Lender | Browser-assisted |
-| 8 | **US Bank** | National Bank | Automated |
-| 9 | **Guaranteed Rate** | Online Lender | Automated |
-| 10 | **LoanDepot** | Online Lender | Browser-assisted |
-| 11 | **TD Bank** | National Bank | Browser-assisted |
-| 12 | **Mr. Cooper** | Largest Servicer | Browser-assisted |
-| 13 | **PNC** | National Bank | Browser-assisted |
+| # | Lender | Type |
+|---|--------|------|
+| 1 | **Bank of America** | Big 4 Bank |
+| 2 | **Wells Fargo** | Big 4 Bank |
+| 3 | **Chase** | Big 4 Bank |
+| 4 | **Citi** | Big 4 Bank |
+| 5 | **Navy Federal Credit Union** | Credit Union |
+| 6 | **SoFi** | Online Lender |
+| 7 | **US Bank** | National Bank |
+| 8 | **Guaranteed Rate** | Online Lender |
+| 9 | **Truist** | National Bank |
+| 10 | **Mr. Cooper** | Largest Servicer |
 
-> **Automated** = stealth browser scrapes the rate without intervention.
-> **Browser-assisted** = site has anti-bot protection; use `--headed` mode to attempt with a visible browser.
+All 10 lenders are fully automated — no manual browser intervention needed.
 
 ### 2 National Benchmarks
 
@@ -68,7 +64,7 @@ Every lender's rate is displayed alongside these benchmarks so you can immediate
 
 ```
 MORTGAGE RATE COMPARISON — Mar 25, 2026
-   13 lenders tracked + 2 benchmarks | 13 reporting now
+   10 lenders tracked + 2 benchmarks | 10 reporting now
 
 --- 30-YEAR FIXED -----------------------------------------------
 
@@ -77,15 +73,12 @@ MORTGAGE RATE COMPARISON — Mar 25, 2026
      SoFi                    5.990%
      Freddie Mac (natl avg)  6.220%  ·················· benchmark
      Guaranteed Rate         6.250%  (6.547% APR)
+     Truist                  6.350%  (6.510% APR)
      Chase                   6.375%  (6.481% APR)
      US Bank                 6.375%  (6.504% APR)
      Bank of America         6.500%  (6.738% APR)
-     Rocket Mortgage         6.500%  (6.621% APR)
      MND Index               6.480%  ·················· benchmark
-     LoanDepot               6.500%  (6.680% APR)
      Citi                    6.625%  (6.750% APR)
-     TD Bank                 6.625%  (6.712% APR)
-     PNC                     6.625%  (6.790% APR)
      Mr. Cooper              6.750%  (6.820% APR)
 
   Avg: 6.330%  |  vs yesterday: down 0.010%
@@ -98,11 +91,10 @@ MORTGAGE RATE COMPARISON — Mar 25, 2026
      Guaranteed Rate         5.500%  (5.919% APR)
      Freddie Mac (natl avg)  5.540%  ·················· benchmark
      Wells Fargo             5.625%  (5.874% APR)
+     Truist                  5.700%  (5.980% APR)
      Bank of America         5.750%  (6.134% APR)
      Chase                   5.875%  (6.012% APR)
-     Rocket Mortgage         5.750%  (5.890% APR)
      Citi                    5.875%  (6.050% APR)
-     PNC                     5.875%  (6.010% APR)
 
   Avg: 5.628%  |  vs yesterday: down 0.015%
 ```
@@ -210,22 +202,14 @@ post_to_channel(result)
 
 ## Headless vs Headed Mode
 
-### Why are some lenders blocked?
-
-Major banks like Chase, Rocket Mortgage, and Citi use aggressive anti-bot protection on their rate pages. They detect headless browsers (even stealth ones like patchright) and either refuse to load rates or serve empty placeholders like `X.XXX%`.
-
-### How we solve it
+All 10 lenders are fully automated and work in headless mode. The `--headed` flag is still available if you want to watch the browser work or debug scraping issues.
 
 | Mode | Command | What happens |
 |------|---------|-------------|
-| **Headless** (default) | `python mortgage_rate_report.py` | Scrapes 6 automated lenders + 2 benchmarks. Blocked lenders listed at bottom for manual check. Best for cron jobs and server environments. |
-| **Headed** | `python mortgage_rate_report.py --headed` | Opens a **visible browser window** and attempts all 13 lenders. Banks are less likely to block a visible browser. Requires a display (desktop/laptop). |
+| **Headless** (default) | `python mortgage_rate_report.py` | Scrapes all 10 lenders + 2 benchmarks in the background. Best for cron jobs, servers, and automation. |
+| **Headed** | `python mortgage_rate_report.py --headed` | Opens a **visible browser window** so you can watch the scraping. Useful for debugging. |
 
-In headed mode, lenders are scraped in batches of 4 to avoid overwhelming your machine. Each failed lender gets automatic retries with increasing wait times before being marked as unavailable.
-
-### For automation agents
-
-If you're running this through an AI agent that has access to a real browser profile, the agent can check the blocked lenders manually and merge the results into the script output. The script prints a `Need browser check:` line listing exactly which lenders still need a real browser.
+Lenders are scraped in batches of 4 to avoid overwhelming your machine. Each failed lender gets automatic retries with increasing wait times before being marked as unavailable.
 
 ---
 
@@ -242,23 +226,18 @@ If you're running this through an AI agent that has access to a real browser pro
    (stealth)       (stealth)       (CSV API)
         |               |               |
    BofA, WF,          MND          Freddie Mac
-  Navy Fed,          Index           PMMS
-  SoFi, USB,
- Guaranteed Rate
-        |
-  Browser fallback
-  (anti-bot sites)
-        |
-   Chase, Rocket,
-  Citi, LoanDepot,
- TD, Mr. Cooper, PNC
+  Chase, Citi,       Index           PMMS
+  Navy Fed, SoFi,
+  USB, Guaranteed
+  Rate, Truist,
+  Mr. Cooper
 ```
 
-**Automated lenders** are scraped simultaneously with patchright — a stealth Chromium browser engine that bypasses bot detection. Each lender gets its own browser context, all running in parallel via `asyncio.gather()`.
+**All 10 lenders** are scraped simultaneously with patchright — a stealth Chromium browser engine that bypasses bot detection. Each lender gets its own browser context, running in parallel batches of 4 via `asyncio.gather()`.
 
 **Freddie Mac** is fetched via direct CSV API — no browser needed.
 
-**Anti-bot protected banks** (Chase, Rocket, Citi, etc.) block headless browsers. Use `--headed` mode to attempt these with a visible browser window.
+**Mortgage News Daily** is fetched via plain HTML with urllib — no browser needed.
 
 ---
 
