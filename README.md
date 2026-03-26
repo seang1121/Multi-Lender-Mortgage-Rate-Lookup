@@ -1,55 +1,66 @@
 # Multi-Lender Mortgage Rate Lookup
 
-**Compare mortgage rates across 13 lenders and 2 national benchmarks — in seconds. One command. All the major banks, credit unions, and online lenders scraped in parallel, sorted by lowest rate, with day-over-day tracking.**
+> Compare mortgage rates across **13 lenders** and **2 national benchmarks** in a single command. All major banks, credit unions, and online lenders — scraped in parallel, ranked lowest to highest, with day-over-day market tracking.
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue)
 ![Lenders](https://img.shields.io/badge/lenders-13-brightgreen)
 ![Benchmarks](https://img.shields.io/badge/benchmarks-2-blue)
-![Schedule](https://img.shields.io/badge/schedule-daily-blue)
+![Schedule](https://img.shields.io/badge/runs-daily-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ---
 
-## Why This Exists
+## The Problem
 
-Shopping for mortgage rates means opening 10+ bank websites, entering your info on each one, and manually comparing. This tool does all of that in one command — hits every lender simultaneously, extracts rates, sorts them, and tells you who has the best deal today.
+Shopping for the best mortgage rate means opening a dozen bank websites, entering your info on each one, waiting for JavaScript to load, and manually comparing numbers. Every. Single. Day.
 
-Rates are compared against **2 national benchmarks** (Freddie Mac PMMS and Mortgage News Daily) so you can instantly see if a lender is above or below the market average.
+## The Solution
 
-Built for anyone who wants to track the mortgage market daily without lifting a finger.
+One command. 13 lenders. 2 national benchmarks. Sorted best to worst. In under 30 seconds.
+
+The script hits every lender simultaneously using stealth browser automation, extracts the current rate and APR, compares them against Freddie Mac and Mortgage News Daily national averages, tracks how rates moved since yesterday, and gives you a clean ranked report you can pipe to Discord, Slack, email, or any automation pipeline.
 
 ---
 
-## 13 Lenders + 2 National Benchmarks
+## What Gets Tracked
 
-### Lenders (13)
+### 13 Lenders
 
-**Automated scraping** — runs without intervention:
-| Lender | Type | Products |
-|--------|------|----------|
-| Bank of America | Big 4 Bank | 30yr, 15yr |
-| Wells Fargo | Big 4 Bank | 30yr, 15yr |
-| Navy Federal Credit Union | Credit Union | 30yr, 15yr |
-| SoFi | Online Lender | 30yr, 15yr |
-| US Bank | National Bank | 30yr, 15yr |
-| Guaranteed Rate | Online Lender | 30yr, 15yr |
+| # | Lender | Type | Method |
+|---|--------|------|--------|
+| 1 | **Bank of America** | Big 4 Bank | Automated |
+| 2 | **Wells Fargo** | Big 4 Bank | Automated |
+| 3 | **Chase** | Big 4 Bank | Browser-assisted |
+| 4 | **Citi** | Big 4 Bank | Browser-assisted |
+| 5 | **Navy Federal Credit Union** | Credit Union | Automated |
+| 6 | **SoFi** | Online Lender | Automated |
+| 7 | **Rocket Mortgage** | #1 Online Lender | Browser-assisted |
+| 8 | **US Bank** | National Bank | Automated |
+| 9 | **Guaranteed Rate** | Online Lender | Automated |
+| 10 | **LoanDepot** | Online Lender | Browser-assisted |
+| 11 | **TD Bank** | National Bank | Browser-assisted |
+| 12 | **Mr. Cooper** | Largest Servicer | Browser-assisted |
+| 13 | **PNC** | National Bank | Browser-assisted |
 
-**Browser-assisted** — anti-bot protected, needs a real browser session:
-| Lender | Type | Products |
-|--------|------|----------|
-| Chase | Big 4 Bank | 30yr, 15yr, ARM |
-| Rocket Mortgage | #1 Online Lender | 30yr, 15yr, ARM |
-| Citi | Big 4 Bank | 30yr, 15yr |
-| LoanDepot | Online Lender | 30yr, 15yr |
-| TD Bank | National Bank | 30yr, 15yr |
-| Mr. Cooper | Largest Servicer | 30yr, 15yr |
-| PNC | National Bank | 30yr, 15yr |
+> **Automated** = stealth browser scrapes the rate without intervention.
+> **Browser-assisted** = site has anti-bot protection; your automation agent checks it via real browser.
 
-### National Benchmarks (2)
-| Source | What It Is | Update Frequency |
-|--------|-----------|-----------------|
-| Freddie Mac PMMS | Official national average from the Primary Mortgage Market Survey | Weekly |
-| Mortgage News Daily | Industry-standard daily rate index used by professionals | Daily |
+### 2 National Benchmarks
+
+| Source | Description | Frequency |
+|--------|-------------|-----------|
+| **Freddie Mac PMMS** | Official national average from the Primary Mortgage Market Survey — the industry gold standard | Weekly |
+| **Mortgage News Daily** | Real-time daily rate index tracked by mortgage professionals nationwide | Daily |
+
+Every lender's rate is displayed alongside these benchmarks so you can immediately see who's above or below the national average.
+
+### Products Compared
+
+- 30-Year Fixed (rate + APR)
+- 15-Year Fixed (rate + APR)
+- FHA 30-Year (where available)
+- VA 30-Year (where available)
+- ARM (where available)
 
 ---
 
@@ -64,18 +75,18 @@ Built for anyone who wants to track the mortgage market daily without lifting a 
   🏆 Navy Federal CU         5.625%                     BEST
      Wells Fargo             5.750%  (5.968% APR)
      SoFi                    5.990%
-     Freddie Mac (natl avg)  6.220%
+     Freddie Mac (natl avg)  6.220%  ·················· benchmark
      Guaranteed Rate         6.250%  (6.547% APR)
      Chase                   6.375%  (6.481% APR)
      US Bank                 6.375%  (6.504% APR)
      Bank of America         6.500%  (6.738% APR)
      Rocket Mortgage         6.500%  (6.621% APR)
-     Citi                    6.625%  (6.750% APR)
+     MND Index               6.480%  ·················· benchmark
      LoanDepot               6.500%  (6.680% APR)
+     Citi                    6.625%  (6.750% APR)
      TD Bank                 6.625%  (6.712% APR)
-     Mr. Cooper              6.750%  (6.820% APR)
      PNC                     6.625%  (6.790% APR)
-     MND Index               6.480%
+     Mr. Cooper              6.750%  (6.820% APR)
 
   📊 Avg: 6.330%  |  vs yesterday: ▼ 0.010%
 
@@ -85,17 +96,22 @@ Built for anyone who wants to track the mortgage market daily without lifting a 
      SoFi                    5.375%
      US Bank                 5.490%  (5.760% APR)
      Guaranteed Rate         5.500%  (5.919% APR)
-     Freddie Mac (natl avg)  5.540%
+     Freddie Mac (natl avg)  5.540%  ·················· benchmark
      Wells Fargo             5.625%  (5.874% APR)
      Bank of America         5.750%  (6.134% APR)
-     ...
+     Chase                   5.875%  (6.012% APR)
+     Rocket Mortgage         5.750%  (5.890% APR)
+     Citi                    5.875%  (6.050% APR)
+     PNC                     5.875%  (6.010% APR)
 
   📊 Avg: 5.628%  |  vs yesterday: ▼ 0.015%
 ```
 
 ---
 
-## Quick Start
+## Getting Started
+
+### Install
 
 ```bash
 git clone https://github.com/seang1121/Multi-Lender-Mortgage-Rate-Lookup.git
@@ -104,52 +120,15 @@ pip install -r requirements.txt
 python -m patchright install chromium
 ```
 
-Run it:
+### Run
 
 ```bash
 python3 mortgage_rate_report.py
 ```
 
----
+### Configure
 
-## Use It as an Agent or Plugin
-
-This tool outputs clean text to stdout — pipe it anywhere.
-
-### Daily cron job
-```bash
-0 8 * * * cd /path/to/Multi-Lender-Mortgage-Rate-Lookup && python3 mortgage_rate_report.py >> rates.log 2>&1
-```
-
-### Discord bot integration
-```python
-import subprocess
-output = subprocess.run(["python3", "mortgage_rate_report.py"], capture_output=True, text=True)
-send_to_discord(channel_id, output.stdout)
-```
-
-### Slack webhook
-```bash
-python3 mortgage_rate_report.py | curl -X POST -d @- https://hooks.slack.com/services/YOUR/WEBHOOK/URL
-```
-
-### AI agent automation
-Have your agent run the script on a schedule and post the results. The script handles scraping, comparison, and formatting — your agent just delivers it.
-
-```python
-# Example: scheduled agent runs daily, posts to your channel
-result = run_command("python3 mortgage_rate_report.py")
-post_to_channel(result)
-```
-
-### JSON history for analysis
-Rate history is stored at `data/mortgage_rates_history.json` — 90-day rolling window. Use it for trend analysis, charting, or feeding into other tools.
-
----
-
-## Configuration
-
-Edit `config.json`:
+Set your ZIP code in `config.json`:
 
 ```json
 {
@@ -163,77 +142,128 @@ Edit `config.json`:
 
 ---
 
+## Run It as an Agent, Bot, or Scheduled Task
+
+The script outputs clean text to stdout. Pipe it anywhere.
+
+### Daily cron job (runs every morning)
+```bash
+0 8 * * * cd /path/to/Multi-Lender-Mortgage-Rate-Lookup && python3 mortgage_rate_report.py >> rates.log 2>&1
+```
+
+### Discord bot
+```python
+import subprocess
+
+output = subprocess.run(
+    ["python3", "mortgage_rate_report.py"],
+    capture_output=True, text=True
+)
+send_to_discord(channel_id, output.stdout)
+```
+
+### Slack webhook
+```bash
+python3 mortgage_rate_report.py | curl -X POST -H 'Content-type: application/json' \
+  -d "{\"text\": \"$(cat -)\"}" https://hooks.slack.com/services/YOUR/WEBHOOK/URL
+```
+
+### AI agent integration
+Your agent runs the script, reads the output, and delivers it however you want — Discord, Telegram, email, SMS. The script handles all the scraping and formatting. Your agent just schedules and delivers.
+
+```python
+result = run_command("python3 mortgage_rate_report.py")
+post_to_channel(result)
+```
+
+### Rate history for analysis
+90 days of rate data stored at `data/mortgage_rates_history.json`. Use it for trend analysis, charting, or feeding into financial models.
+
+---
+
 ## How It Works
 
 ```
-mortgage_rate_report.py
+                mortgage_rate_report.py
+                        |
+          asyncio.gather() — all in parallel
+                        |
+        ┌───────────────┼───────────────┐
+        |               |               |
+   patchright       patchright       urllib
+   (stealth)       (stealth)       (CSV API)
+        |               |               |
+   BofA, WF,          MND          Freddie Mac
+  Navy Fed,          Index           PMMS
+  SoFi, USB,
+ Guaranteed Rate
         |
-   asyncio.gather()  ──  all lenders hit in parallel
+  Browser fallback
+  (anti-bot sites)
         |
-   ┌────┴────────────────────────┐
-   |                             |
-   patchright (stealth)       urllib (API)
-   |                             |
-   BofA, Wells Fargo,        Freddie Mac
-   Navy Federal, SoFi,       PMMS CSV
-   US Bank, Guaranteed
-   Rate, MND
-   |
-   Browser fallback
-   (for anti-bot sites)
-   |
-   Chase, Rocket, Citi,
-   LoanDepot, TD, PNC,
-   Mr. Cooper
+   Chase, Rocket,
+  Citi, LoanDepot,
+ TD, Mr. Cooper, PNC
 ```
 
-All automated lenders are scraped simultaneously using patchright — a stealth Chromium engine that bypasses bot detection. Anti-bot protected banks (Chase, Rocket, etc.) can be supplemented by a real browser session via your automation agent.
+**Automated lenders** are scraped simultaneously with patchright — a stealth Chromium browser engine that bypasses bot detection. Each lender gets its own browser context, all running in parallel via `asyncio.gather()`.
+
+**Freddie Mac** is fetched via direct CSV API — no browser needed.
+
+**Anti-bot protected banks** (Chase, Rocket, Citi, etc.) block headless browsers. These are designed to be supplemented by your automation agent using a real browser session.
 
 ---
 
 ## Tech Stack
 
-| Component | Technology |
-|-----------|------------|
-| Language | Python 3.10+ |
-| Browser | patchright (stealth Chromium) |
-| Scraping | scrapling, patchright async |
-| Benchmark | Freddie Mac PMMS CSV API |
-| Storage | JSON (90-day rolling history) |
-| Parallelism | asyncio.gather() |
+| Component | What | Why |
+|-----------|------|-----|
+| Python 3.10+ | Core language | Async support, modern syntax |
+| patchright | Stealth Chromium | Bypasses bot detection on bank sites |
+| scrapling | Scraping framework | Browser fingerprint spoofing |
+| asyncio | Parallelism | All lenders scraped simultaneously |
+| Freddie Mac CSV | Benchmark API | No browser needed, direct data |
+| JSON | Storage | 90-day rolling rate history |
 
 ---
 
 ## Project Structure
 
-| File | Purpose |
-|------|---------|
-| `mortgage_rate_report.py` | Multi-lender parallel scraper |
-| `mortgage_tracker.py` | Legacy single-lender tracker |
-| `config.json` | ZIP code and alert settings |
-| `data/` | Rate history (gitignored) |
-| `requirements.txt` | Dependencies |
+```
+Multi-Lender-Mortgage-Rate-Lookup/
+├── mortgage_rate_report.py    # Multi-lender parallel scraper (primary)
+├── mortgage_tracker.py        # Legacy single-lender tracker
+├── config.json                # Your ZIP code and settings
+├── requirements.txt           # Python dependencies
+├── data/                      # Rate history (gitignored)
+└── README.md
+```
 
 ---
 
 ## Roadmap
 
-- **MCP Server** — Wrap as a Model Context Protocol server so any AI agent can call `get_rates(zip_code)` and receive structured rate data. Plug it into Claude, OpenAI, or any MCP-compatible platform as a live mortgage rate tool.
-- **Additional lenders** — Community-sourced URLs and API endpoints for anti-bot protected banks
-- **Rate alerts** — Push notifications when rates drop below your target
-- **Historical charting** — Visualize 90-day rate trends per lender
+- **MCP Server** — Wrap as a Model Context Protocol server so any AI agent can call `get_rates(zip_code)` and get structured rate data back. Plug into Claude, ChatGPT, or any MCP-compatible platform as a live tool.
+- **More lenders** — Community-sourced URLs and API endpoints for anti-bot protected banks
+- **Rate alerts** — Notifications when rates drop below your target
+- **Historical charts** — Visualize 90-day rate trends per lender
+- **Multi-ZIP support** — Compare rates across different markets simultaneously
 
 ---
 
 ## Contributing
 
-Pull requests welcome. If you find a working URL or API endpoint for any of the browser-assisted lenders, open an issue — that's the fastest way to improve coverage.
+Pull requests welcome. The fastest way to improve coverage:
+
+- Found a working URL or API endpoint for a browser-assisted lender? **Open an issue.**
+- Built an integration (Discord bot, Slack app, Home Assistant)? **Share it.**
+- Have a lender we're missing? **Submit a PR.**
 
 ---
 
 ## Disclaimer
 
-For informational purposes only. Rates are scraped from public pages and may not match actual lender quotes. Always verify directly with lenders before making financial decisions.
+For informational purposes only. Rates are scraped from publicly available pages and may not match actual lender quotes. Always verify directly with lenders before making financial decisions.
 
 ## License
 
