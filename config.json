@@ -1,23 +1,33 @@
 {
-  "zip_code": "32224",
+  "zip_code": "YOUR_ZIP",
   "tracking": {
     "enabled": true,
-    "daily_check_time": "09:00 AM EST",
+    "daily_check_time": "08:00 AM EST",
     "alert_threshold": 0.125
   },
   "data_sources": {
     "primary": "Multi-lender (patchright stealth browser)",
     "fallback": "Freddie Mac PMMS CSV",
-    "lenders": [
+    "automated_lenders": [
       "Bank of America",
       "Wells Fargo",
       "Navy Federal CU",
       "SoFi",
       "US Bank",
-      "Guaranteed Rate",
-      "LendingTree (averages)",
-      "MND Index",
-      "Freddie Mac PMMS"
+      "Guaranteed Rate"
+    ],
+    "browser_assisted_lenders": [
+      "Chase",
+      "Rocket Mortgage",
+      "Citi",
+      "LoanDepot",
+      "TD Bank",
+      "Mr. Cooper",
+      "PNC"
+    ],
+    "benchmarks": [
+      "Freddie Mac PMMS",
+      "Mortgage News Daily"
     ]
   },
   "notification": {
