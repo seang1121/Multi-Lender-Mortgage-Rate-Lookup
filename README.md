@@ -39,36 +39,54 @@ Tracks **15 mortgage lenders** across the US market — scrapes rates in paralle
 ## Sample Output
 
 ```
-MORTGAGE RATE COMPARISON — Mar 25, 2026
-ZIP 32224 | 15 lenders
+🏠 MORTGAGE RATE COMPARISON
+📅 Mar 25, 2026 | 📍 ZIP 32224 | 🏦 15 lenders
 
---- 30-YEAR FIXED ---
-  Navy Federal CU              5.625%                   << BEST
-  Wells Fargo                  5.750%  (APR 5.968%)
-  SoFi                         5.990%
-  Natl Avg (Freddie Mac)       6.220%
-  Guaranteed Rate              6.250%  (APR 6.547%)
-  Chase                        6.375%  (APR 6.481%)
-  US Bank                      6.375%  (APR 6.504%)
-  Bank of America              6.500%  (APR 6.738%)
-  Rocket Mortgage              6.500%  (APR 6.621%)
-  Citi                         6.625%  (APR 6.750%)
-  LoanDepot                    6.500%  (APR 6.680%)
-  TD Bank                      6.625%  (APR 6.712%)
-  Mr. Cooper                   6.750%  (APR 6.820%)
-  PNC                          6.625%  (APR 6.790%)
-  MND Index                    6.480%
-  vs last: avg DOWN 0.010%
+━━━ 30-YEAR FIXED ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
---- 15-YEAR FIXED ---
-  Navy Federal CU              5.250%                   << BEST
-  SoFi                         5.375%
-  US Bank                      5.490%  (APR 5.760%)
-  Guaranteed Rate              5.500%  (APR 5.919%)
-  Natl Avg (Freddie Mac)       5.540%
-  Wells Fargo                  5.625%  (APR 5.874%)
-  Bank of America              5.750%  (APR 6.134%)
-  ...
+  👑  Navy Federal CU         5.625%                  🏆 BEST
+  📉  Wells Fargo             5.750%  (5.968% APR)
+  📉  SoFi                    5.990%
+  ➖  Freddie Mac (natl avg)  6.220%
+  📈  Guaranteed Rate         6.250%  (6.547% APR)
+  📈  Chase                   6.375%  (6.481% APR)
+  📈  US Bank                 6.375%  (6.504% APR)
+  📈  Bank of America         6.500%  (6.738% APR)
+  📈  Rocket Mortgage         6.500%  (6.621% APR)
+  📈  Citi                    6.625%  (6.750% APR)
+  📈  LoanDepot               6.500%  (6.680% APR)
+  📈  TD Bank                 6.625%  (6.712% APR)
+  📈  Mr. Cooper              6.750%  (6.820% APR)
+  📈  PNC                     6.625%  (6.790% APR)
+  ➖  MND Index               6.480%
+
+  📊 Avg: 6.330%  |  vs last: ⬇️ DOWN 0.010%
+
+━━━ 15-YEAR FIXED ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  👑  Navy Federal CU         5.250%                  🏆 BEST
+  📉  SoFi                    5.375%
+  📉  US Bank                 5.490%  (5.760% APR)
+  📉  Guaranteed Rate         5.500%  (5.919% APR)
+  ➖  Freddie Mac (natl avg)  5.540%
+  📈  Wells Fargo             5.625%  (5.874% APR)
+  📈  Bank of America         5.750%  (6.134% APR)
+  📈  Chase                   5.875%  (6.012% APR)
+  📈  Rocket Mortgage         5.750%  (5.890% APR)
+  📈  Citi                    5.875%  (6.050% APR)
+  📈  PNC                     5.875%  (6.010% APR)
+
+  📊 Avg: 5.628%  |  vs last: ⬇️ DOWN 0.015%
+
+━━━ FHA 30-YEAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  👑  Navy Federal CU         5.500%  (6.070% APR)    🏆 BEST
+  📈  Chase                   6.000%  (6.842% APR)
+
+━━━ VA 30-YEAR ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  👑  Navy Federal CU         5.375%  (5.569% APR)    🏆 BEST
+  📈  Rocket Mortgage         5.750%  (5.980% APR)
 ```
 
 ## Features
