@@ -248,13 +248,13 @@ def format_report(unique, successes, failures, history):
     """Build the formatted rate comparison report."""
     last_rates = history[-1].get("rates", {}) if history else {}
 
-    lender_count = len(set(r["lender"] for r in unique if r["lender"] not in BENCHMARKS))
-    benchmark_count = len(set(r["lender"] for r in unique if r["lender"] in BENCHMARKS))
+    total_lenders = len(BROWSER_SOURCES) + len(BROWSER_ASSISTED)  # always 13
+    reporting = len(set(r["lender"] for r in unique if r["lender"] not in BENCHMARKS))
 
     today = datetime.now().strftime("%b %d, %Y")
     lines = [
         f"MORTGAGE RATE COMPARISON \u2014 {today}",
-        f"   {lender_count} lenders + {benchmark_count} benchmarks | sorted lowest to highest",
+        f"   {total_lenders} lenders tracked + 2 benchmarks | {reporting} reporting now",
         "",
     ]
 

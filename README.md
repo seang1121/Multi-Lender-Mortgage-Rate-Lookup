@@ -68,7 +68,7 @@ Every lender's rate is displayed alongside these benchmarks so you can immediate
 
 ```
 🏠 MORTGAGE RATE COMPARISON — Mar 25, 2026
-   13 lenders + 2 benchmarks | sorted lowest to highest
+   13 lenders tracked + 2 benchmarks | 13 reporting now
 
 --- 30-YEAR FIXED -----------------------------------------------
 
