@@ -40,7 +40,7 @@ Tracks **15 mortgage lenders** across the US market — scrapes rates in paralle
 
 ```
 🏠 MORTGAGE RATE COMPARISON
-📅 Mar 25, 2026 | 📍 ZIP 32224 | 🏦 15 lenders
+📅 Mar 25, 2026 | 📍 ZIP XXXXX | 🏦 15 lenders
 
 ━━━ 30-YEAR FIXED ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -140,7 +140,7 @@ Edit `config.json` to set your ZIP code:
 
 ```json
 {
-  "zip_code": "32224"
+  "zip_code": "XXXXX"
 }
 ```
 
