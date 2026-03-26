@@ -340,6 +340,66 @@ def format_report(unique, successes, failures, history):
     return "\n".join(lines)
 
 
+# ─── OPENCLAW BROWSER FALLBACK (CDP) ─────────────────────────────────────────
+
+async def scrape_chase_via_cdp(zip_code):
+    """
+    Fallback: connect to the running OpenClaw browser via CDP (port 18800)
+    and extract Chase rates directly via JavaScript — bypasses anti-bot.
+    """
+    try:
+        from patchright.async_api import async_playwright
+        async with async_playwright() as pw:
+            browser = await pw.chromium.connect_over_cdp("http://127.0.0.1:18800")
+            context = browser.contexts[0] if browser.contexts else await browser.new_context()
+            page = await context.new_page()
+
+            await page.goto(
+                "https://www.chase.com/personal/mortgage/mortgage-rates",
+                timeout=20000, wait_until="domcontentloaded"
+            )
+            await page.wait_for_timeout(3000)
+
+            # Fill ZIP and submit
+            try:
+                zip_input = await page.query_selector("input[placeholder*='zip' i], input[id*='zip' i]")
+                if zip_input:
+                    await zip_input.triple_click()
+                    await zip_input.type(zip_code)
+                    await page.wait_for_timeout(500)
+                    btn = await page.query_selector("button:has-text('See rates'), button[type='submit']")
+                    if btn:
+                        await btn.click()
+                        await page.wait_for_timeout(5000)
+            except Exception:
+                pass
+
+            # Wait for rate table to load (Chase renders it async)
+            try:
+                await page.wait_for_function(
+                    "() => { const t = document.querySelector('table'); return t && t.innerText.includes('%'); }",
+                    timeout=10000
+                )
+            except Exception:
+                pass
+
+            # Extract rate table directly from DOM
+            table_text = await page.evaluate("""() => {
+                const el = document.querySelector('table') ||
+                           document.querySelector('[class*="rate"]') ||
+                           document.querySelector('[data-testid*="rate"]');
+                return el ? el.innerText : '';
+            }""")
+
+            await page.close()
+
+            if table_text and "%" in table_text:
+                return extract_rates(table_text, "Chase")
+    except Exception as e:
+        pass
+    return []
+
+
 # ─── MAIN ────────────────────────────────────────────────────────────────────
 
 def main():
@@ -386,6 +446,18 @@ def main():
             successes.append(name)
         else:
             failures.append(name)
+
+    # CDP fallback: if Chase failed, try via OpenClaw browser (port 18800)
+    if "Chase" in failures:
+        print("  Chase failed headless — trying OpenClaw browser CDP fallback...")
+        chase_rates = asyncio.run(scrape_chase_via_cdp(ZIP_CODE))
+        if chase_rates:
+            all_rates.extend(chase_rates)
+            failures.remove("Chase")
+            successes.append("Chase (CDP)")
+            print("  Chase: CDP fallback succeeded")
+        else:
+            print("  Chase: CDP fallback also failed")
 
     if not all_rates:
         print("No rates fetched from any source.")
