@@ -130,8 +130,14 @@ HEADED_SOURCES = [
 ]
 
 
-async def scrape_lender(browser, name, url):
+MAX_RETRIES = 3
+BATCH_SIZE = 4
+WAIT_SCHEDULE = [8000, 12000, 15000]  # increasing wait per attempt
+
+
+async def scrape_lender(browser, name, url, wait_ms=None):
     """Scrape a single lender with stealth browser."""
+    wait = wait_ms or WAIT_MS
     try:
         ctx = await browser.new_context(
             viewport={"width": 1920, "height": 1080},
@@ -139,8 +145,23 @@ async def scrape_lender(browser, name, url):
             locale="en-US",
         )
         page = await ctx.new_page()
-        await page.goto(url, timeout=20000, wait_until="domcontentloaded")
-        await page.wait_for_timeout(WAIT_MS)
+        await page.goto(url, timeout=25000, wait_until="domcontentloaded")
+        await page.wait_for_timeout(wait)
+
+        # Try ZIP input if present
+        for sel in ['input[name*="zip" i]', 'input[placeholder*="ZIP" i]', 'input[id*="zip" i]']:
+            el = await page.query_selector(sel)
+            if el:
+                await el.fill(ZIP_CODE)
+                await page.wait_for_timeout(500)
+                for btn_sel in ['button[type="submit"]', 'button:has-text("Update")', 'button:has-text("Get")', 'button:has-text("View")']:
+                    btn = await page.query_selector(btn_sel)
+                    if btn:
+                        await btn.click()
+                        await page.wait_for_timeout(5000)
+                        break
+                break
+
         text = await page.inner_text("body")
         await ctx.close()
         return name, extract_rates(text, name)
@@ -152,49 +173,55 @@ async def scrape_lender(browser, name, url):
         return name, []
 
 
+async def scrape_with_retries(browser, name, url):
+    """Try up to MAX_RETRIES times with increasing wait."""
+    for attempt in range(MAX_RETRIES):
+        wait = WAIT_SCHEDULE[min(attempt, len(WAIT_SCHEDULE) - 1)]
+        result_name, rates = await scrape_lender(browser, name, url, wait_ms=wait)
+        if rates:
+            if attempt > 0:
+                print(f"  {name}: succeeded on attempt {attempt + 1}")
+            return result_name, rates
+    return name, []
+
+
 async def scrape_all_browser(headed=False):
-    """Scrape lenders — parallel first, retry failures, optionally include headed lenders."""
+    """Scrape lenders in batches of 4, retry failures up to 3x with increasing wait."""
     from patchright.async_api import async_playwright
 
     sources = list(BROWSER_SOURCES)
     if headed:
-        # In headed mode, also attempt the anti-bot protected lenders
         sources.extend(HEADED_SOURCES)
 
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=not headed)
 
-        # Pass 1: all in parallel (max 4 at a time in headed mode to avoid overload)
-        if headed and len(sources) > 4:
-            # Batch parallel to avoid overwhelming the machine
-            final = []
-            for batch_start in range(0, len(sources), 4):
-                batch = sources[batch_start:batch_start + 4]
-                tasks = [scrape_lender(browser, name, url) for name, url in batch]
-                results = await asyncio.gather(*tasks)
-                for (name, rates), (orig_name, orig_url) in zip(results, batch):
-                    if rates:
-                        final.append((name, rates))
-                    else:
-                        # Retry failed ones from this batch
-                        retry_name, retry_rates = await scrape_lender(browser, orig_name, orig_url)
-                        final.append((retry_name, retry_rates))
-        else:
-            tasks = [scrape_lender(browser, name, url) for name, url in sources]
+        final = []
+        failed = []
+
+        # Process in batches of BATCH_SIZE
+        for batch_start in range(0, len(sources), BATCH_SIZE):
+            batch = sources[batch_start:batch_start + BATCH_SIZE]
+            batch_names = [name for name, _ in batch]
+            print(f"  Batch {batch_start // BATCH_SIZE + 1}: {', '.join(batch_names)}")
+
+            # Parallel scrape this batch
+            tasks = [scrape_lender(browser, name, url) for name, url in batch]
             results = await asyncio.gather(*tasks)
 
-            final = []
-            retry_list = []
-            for (name, rates), (orig_name, orig_url) in zip(results, sources):
+            # Sort into success / needs retry
+            for (name, rates), (orig_name, orig_url) in zip(results, batch):
                 if rates:
                     final.append((name, rates))
                 else:
-                    retry_list.append((orig_name, orig_url))
+                    failed.append((orig_name, orig_url))
 
-            if retry_list:
-                for name, url in retry_list:
-                    retry_name, retry_rates = await scrape_lender(browser, name, url)
-                    final.append((retry_name, retry_rates))
+        # Retry all failures sequentially with increasing wait
+        if failed:
+            print(f"  Retrying {len(failed)} failed: {', '.join(n for n, _ in failed)}")
+            for name, url in failed:
+                result_name, rates = await scrape_with_retries(browser, name, url)
+                final.append((result_name, rates))
 
         await browser.close()
     return final
