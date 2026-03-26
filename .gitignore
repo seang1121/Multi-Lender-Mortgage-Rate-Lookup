@@ -36,3 +36,14 @@ config.local.json
 # Claude Code
 .claude/
 CLAUDE.local.md
+
+# Secrets
+.env
+.env.*
+!.env.example
+credentials.json
+service-account.json
+secrets.json
+secrets.yaml
+*.key
+*.pem
