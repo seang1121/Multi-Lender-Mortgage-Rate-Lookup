@@ -123,7 +123,11 @@ python -m patchright install chromium
 ### Run
 
 ```bash
+# Headless mode — scrapes 6 automated lenders + 2 benchmarks
 python3 mortgage_rate_report.py
+
+# Headed mode — opens a visible browser to attempt ALL 13 lenders
+python3 mortgage_rate_report.py --headed
 ```
 
 ### Configure
@@ -178,6 +182,27 @@ post_to_channel(result)
 
 ### Rate history for analysis
 90 days of rate data stored at `data/mortgage_rates_history.json`. Use it for trend analysis, charting, or feeding into financial models.
+
+---
+
+## Headless vs Headed Mode
+
+### Why are some lenders blocked?
+
+Major banks like Chase, Rocket Mortgage, and Citi use aggressive anti-bot protection on their rate pages. They detect headless browsers (even stealth ones like patchright) and either refuse to load rates or serve empty placeholders like `X.XXX%`.
+
+### How we solve it
+
+| Mode | Command | What happens |
+|------|---------|-------------|
+| **Headless** (default) | `python3 mortgage_rate_report.py` | Scrapes 6 automated lenders + 2 benchmarks. Blocked lenders listed at bottom for manual check. Best for cron jobs and server environments. |
+| **Headed** | `python3 mortgage_rate_report.py --headed` | Opens a **visible browser window** and attempts all 13 lenders. Banks can't tell it's automated because it looks like a real user. Requires a display (desktop/laptop). |
+
+In headed mode, lenders are scraped in batches of 4 to avoid overwhelming your machine. Each failed lender gets an automatic retry before being marked as unavailable.
+
+### For automation agents
+
+If you're running this through an AI agent (like OpenClaw, Claude Code, or a custom bot) that has access to a real browser profile, the agent can check the blocked lenders manually and merge the results into the script output. The script prints a `Need browser check:` line listing exactly which lenders still need a real browser.
 
 ---
 

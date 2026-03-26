@@ -2,8 +2,8 @@
 mortgage_rate_report.py — Multi-lender mortgage rate comparison
 
 Compares 13 lenders + 2 national benchmarks.
-  - 6 lenders automated via patchright stealth browser
-  - 7 lenders browser-assisted (anti-bot protected, listed for OpenClaw fallback)
+  - 6 lenders automated via patchright stealth browser (headless)
+  - 7 lenders anti-bot protected (use --headed to attempt with visible browser)
   - Freddie Mac PMMS via direct CSV API
   - Mortgage News Daily via urllib (no browser needed)
 
@@ -13,9 +13,12 @@ Reliability:
   - urllib fallback for MND and Freddie Mac (no browser needed)
   - 2 attempts per lender before marking as failed
 
-Usage: python3 mortgage_rate_report.py
+Usage:
+  python3 mortgage_rate_report.py            # headless, automated lenders only
+  python3 mortgage_rate_report.py --headed   # visible browser, attempts ALL 13 lenders
 """
 
+import argparse
 import asyncio
 import json
 import os
@@ -115,6 +118,17 @@ BROWSER_SOURCES = [
 
 BROWSER_ASSISTED = ["Chase", "Rocket Mortgage", "Citi", "LoanDepot", "TD Bank", "Mr. Cooper", "PNC"]
 
+# These require a visible browser (headed mode) to bypass anti-bot
+HEADED_SOURCES = [
+    ("Chase", "https://www.chase.com/personal/mortgage/mortgage-rates"),
+    ("Rocket Mortgage", "https://www.rocketmortgage.com/mortgage-rates"),
+    ("Citi", "https://online.citi.com/US/ag/mortgage/fixed-rate-mortgage"),
+    ("LoanDepot", "https://www.loandepot.com/mortgage-rates"),
+    ("TD Bank", "https://www.td.com/us/en/personal-banking/home-loans/mortgage-rates"),
+    ("Mr. Cooper", "https://www.mrcooper.com/mortgage-rates"),
+    ("PNC", "https://www.pnc.com/en/personal-banking/borrowing/home-lending/mortgage-rates.html"),
+]
+
 
 async def scrape_lender(browser, name, url):
     """Scrape a single lender with stealth browser."""
@@ -138,30 +152,49 @@ async def scrape_lender(browser, name, url):
         return name, []
 
 
-async def scrape_all_browser():
-    """Scrape all automated lenders — parallel first, then retry failures sequentially."""
+async def scrape_all_browser(headed=False):
+    """Scrape lenders — parallel first, retry failures, optionally include headed lenders."""
     from patchright.async_api import async_playwright
 
+    sources = list(BROWSER_SOURCES)
+    if headed:
+        # In headed mode, also attempt the anti-bot protected lenders
+        sources.extend(HEADED_SOURCES)
+
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=True)
+        browser = await pw.chromium.launch(headless=not headed)
 
-        # Pass 1: all in parallel
-        tasks = [scrape_lender(browser, name, url) for name, url in BROWSER_SOURCES]
-        results = await asyncio.gather(*tasks)
+        # Pass 1: all in parallel (max 4 at a time in headed mode to avoid overload)
+        if headed and len(sources) > 4:
+            # Batch parallel to avoid overwhelming the machine
+            final = []
+            for batch_start in range(0, len(sources), 4):
+                batch = sources[batch_start:batch_start + 4]
+                tasks = [scrape_lender(browser, name, url) for name, url in batch]
+                results = await asyncio.gather(*tasks)
+                for (name, rates), (orig_name, orig_url) in zip(results, batch):
+                    if rates:
+                        final.append((name, rates))
+                    else:
+                        # Retry failed ones from this batch
+                        retry_name, retry_rates = await scrape_lender(browser, orig_name, orig_url)
+                        final.append((retry_name, retry_rates))
+        else:
+            tasks = [scrape_lender(browser, name, url) for name, url in sources]
+            results = await asyncio.gather(*tasks)
 
-        # Pass 2: retry any that failed (resource contention on parallel)
-        final = []
-        retry_list = []
-        for (name, rates), (orig_name, orig_url) in zip(results, BROWSER_SOURCES):
-            if rates:
-                final.append((name, rates))
-            else:
-                retry_list.append((orig_name, orig_url))
+            final = []
+            retry_list = []
+            for (name, rates), (orig_name, orig_url) in zip(results, sources):
+                if rates:
+                    final.append((name, rates))
+                else:
+                    retry_list.append((orig_name, orig_url))
 
-        if retry_list:
-            for name, url in retry_list:
-                retry_name, retry_rates = await scrape_lender(browser, name, url)
-                final.append((retry_name, retry_rates))
+            if retry_list:
+                for name, url in retry_list:
+                    retry_name, retry_rates = await scrape_lender(browser, name, url)
+                    final.append((retry_name, retry_rates))
 
         await browser.close()
     return final
@@ -249,9 +282,11 @@ def format_report(unique, successes, failures, history):
 
         lines.append("")
 
-    # Browser-assisted lenders
-    script_failures = [f for f in failures if f not in ("Freddie Mac", "MND")]
-    needs_browser = BROWSER_ASSISTED + script_failures
+    # Browser-assisted lenders (only show if not already attempted)
+    attempted = set(successes + failures)
+    needs_browser = [l for l in BROWSER_ASSISTED if l not in attempted]
+    script_failures = [f for f in failures if f not in ("Freddie Mac", "MND") and f not in BROWSER_ASSISTED]
+    needs_browser.extend(script_failures)
     if needs_browser:
         lines.append(f"Need browser check: {', '.join(needs_browser)}")
 
@@ -261,8 +296,15 @@ def format_report(unique, successes, failures, history):
 # ─── MAIN ────────────────────────────────────────────────────────────────────
 
 def main():
-    total = len(BROWSER_SOURCES) + 2  # + Freddie Mac + MND
-    print(f"Scraping {total} sources ({len(BROWSER_SOURCES)} parallel + 2 API)...\n")
+    parser = argparse.ArgumentParser(description="Multi-lender mortgage rate comparison")
+    parser.add_argument("--headed", action="store_true",
+                        help="Run visible browser to attempt all 13 lenders (bypasses anti-bot on some sites)")
+    args = parser.parse_args()
+
+    browser_count = len(BROWSER_SOURCES) + (len(HEADED_SOURCES) if args.headed else 0)
+    total = browser_count + 2  # + Freddie Mac + MND
+    mode = "headed (visible browser)" if args.headed else "headless"
+    print(f"Scraping {total} sources in {mode} mode...\n")
 
     all_rates = []
     successes = []
@@ -284,7 +326,7 @@ def main():
         failures.append("MND")
 
     # Tier 2: Browser scraping (parallel + sequential retry)
-    browser_results = asyncio.run(scrape_all_browser())
+    browser_results = asyncio.run(scrape_all_browser(headed=args.headed))
 
     for name, rates in browser_results:
         if rates:
