@@ -71,7 +71,14 @@ def extract_rates(text, lender):
             results.append({"lender": lender, "product": product, "rate": float(m.group(1)), "apr": float(m.group(2))})
             continue
 
+        # Pattern 3: "label ... is X.XXX% (X.XXX% APR)"
         m = re.search(label + r'.*?is\s+(\d\.\d{2,3})%\s*\((\d\.\d{2,3})%\s*APR\)', text, re.DOTALL | re.IGNORECASE)
+        if m:
+            results.append({"lender": lender, "product": product, "rate": float(m.group(1)), "apr": float(m.group(2))})
+            continue
+
+        # Pattern 3b: "label ... Rate ... X.XXX% ... APR ... X.XXX%" (Mr. Cooper style)
+        m = re.search(label + r'.*?Rate.*?(\d\.\d{2,3})%.*?APR.*?(\d\.\d{2,3})%', text, re.DOTALL | re.IGNORECASE)
         if m:
             results.append({"lender": lender, "product": product, "rate": float(m.group(1)), "apr": float(m.group(2))})
             continue
@@ -126,24 +133,21 @@ def fetch_mnd_urllib():
 BROWSER_SOURCES = [
     ("Bank of America", "https://promotions.bankofamerica.com/homeloans/homebuying-hub/home-loan-options?subCampCode=41490&dmcode=18099675931"),
     ("Wells Fargo", "https://www.wellsfargo.com/mortgage/rates/"),
+    ("Chase", "https://www.chase.com/personal/mortgage/mortgage-rates"),
+    ("Citi", "https://www.citi.com/mortgage/purchase-rates"),
     ("Navy Federal CU", "https://www.navyfederal.org/loans-cards/mortgage/mortgage-rates/"),
     ("SoFi", "https://www.sofi.com/home-loans/mortgage-rates/"),
     ("US Bank", "https://www.usbank.com/home-loans/mortgage/mortgage-rates.html"),
     ("Guaranteed Rate", "https://www.rate.com/mortgage-rates"),
+    ("Truist", "https://www.truist.com/mortgage/current-mortgage-rates"),
+    ("Mr. Cooper", "https://www.mrcooper.com/get-started/rates?internal_ref=rates_home"),
 ]
 
-BROWSER_ASSISTED = ["Chase", "Rocket Mortgage", "Citi", "LoanDepot", "TD Bank", "Mr. Cooper", "PNC"]
+# No browser-assisted lenders remaining — all 10 are automated
+BROWSER_ASSISTED = []
 
-# These require a visible browser (headed mode) to bypass anti-bot
-HEADED_SOURCES = [
-    ("Chase", "https://www.chase.com/personal/mortgage/mortgage-rates"),
-    ("Rocket Mortgage", "https://www.rocketmortgage.com/mortgage-rates"),
-    ("Citi", "https://online.citi.com/US/ag/mortgage/fixed-rate-mortgage"),
-    ("LoanDepot", "https://www.loandepot.com/mortgage-rates"),
-    ("TD Bank", "https://www.td.com/us/en/personal-banking/home-loans/mortgage-rates"),
-    ("Mr. Cooper", "https://www.mrcooper.com/mortgage-rates"),
-    ("PNC", "https://www.pnc.com/en/personal-banking/borrowing/home-lending/mortgage-rates.html"),
-]
+# Headed mode has no additional sources — everything is in BROWSER_SOURCES
+HEADED_SOURCES = []
 
 
 MAX_RETRIES = 3
@@ -264,7 +268,7 @@ def format_report(unique, successes, failures, history):
     """Build the formatted rate comparison report."""
     last_rates = history[-1].get("rates", {}) if history else {}
 
-    total_lenders = len(BROWSER_SOURCES) + len(BROWSER_ASSISTED)  # always 13
+    total_lenders = len(BROWSER_SOURCES)  # 10 automated lenders
     reporting = len(set(r["lender"] for r in unique if r["lender"] not in BENCHMARKS))
 
     today = datetime.now().strftime("%b %d, %Y")
