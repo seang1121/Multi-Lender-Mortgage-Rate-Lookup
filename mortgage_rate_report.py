@@ -14,8 +14,9 @@ Reliability:
   - 2 attempts per lender before marking as failed
 
 Usage:
-  python3 mortgage_rate_report.py            # headless, automated lenders only
-  python3 mortgage_rate_report.py --headed   # visible browser, attempts ALL 13 lenders
+  python mortgage_rate_report.py                  # headless, automated lenders only
+  python mortgage_rate_report.py --headed         # visible browser, attempts ALL 13 lenders
+  python mortgage_rate_report.py --zip 90210      # override ZIP code from config.json
 """
 
 import argparse
@@ -27,8 +28,23 @@ import ssl
 import urllib.request
 from datetime import datetime
 
-ZIP_CODE = "32224"
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+
+ZIP_CODE = "32224"  # default, overridden by config.json or --zip
+
+
+def load_zip_code(cli_zip=None):
+    """Resolve ZIP code: --zip flag > config.json > default."""
+    if cli_zip:
+        return cli_zip
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE) as f:
+            cfg = json.load(f)
+        zip_val = cfg.get("zip_code", "")
+        if zip_val and zip_val != "YOUR_ZIP":
+            return zip_val
+    return "32224"
 HISTORY_FILE = os.path.join(DATA_DIR, "mortgage_rates_history.json")
 WAIT_MS = 10000
 
@@ -326,7 +342,12 @@ def main():
     parser = argparse.ArgumentParser(description="Multi-lender mortgage rate comparison")
     parser.add_argument("--headed", action="store_true",
                         help="Run visible browser to attempt all 13 lenders (bypasses anti-bot on some sites)")
+    parser.add_argument("--zip", type=str, default=None,
+                        help="ZIP code for rate lookup (overrides config.json)")
     args = parser.parse_args()
+
+    global ZIP_CODE
+    ZIP_CODE = load_zip_code(args.zip)
 
     browser_count = len(BROWSER_SOURCES) + (len(HEADED_SOURCES) if args.headed else 0)
     total = browser_count + 2  # + Freddie Mac + MND

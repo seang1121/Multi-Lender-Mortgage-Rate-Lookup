@@ -16,7 +16,7 @@ Shopping for the best mortgage rate means opening a dozen bank websites, enterin
 
 ## The Solution
 
-One command. 13 lenders. 2 national benchmarks. Sorted best to worst. In under 30 seconds.
+One command. 13 lenders. 2 national benchmarks. Sorted best to worst. Typically completes in 30-90 seconds depending on network speed and lender response times.
 
 The script hits every lender simultaneously using stealth browser automation, extracts the current rate and APR, compares them against Freddie Mac and Mortgage News Daily national averages, tracks how rates moved since yesterday, and gives you a clean ranked report you can pipe to Discord, Slack, email, or any automation pipeline.
 
@@ -43,7 +43,7 @@ The script hits every lender simultaneously using stealth browser automation, ex
 | 13 | **PNC** | National Bank | Browser-assisted |
 
 > **Automated** = stealth browser scrapes the rate without intervention.
-> **Browser-assisted** = site has anti-bot protection; your automation agent checks it via real browser.
+> **Browser-assisted** = site has anti-bot protection; use `--headed` mode to attempt with a visible browser.
 
 ### 2 National Benchmarks
 
@@ -67,12 +67,12 @@ Every lender's rate is displayed alongside these benchmarks so you can immediate
 ## Sample Output
 
 ```
-🏠 MORTGAGE RATE COMPARISON — Mar 25, 2026
+MORTGAGE RATE COMPARISON — Mar 25, 2026
    13 lenders tracked + 2 benchmarks | 13 reporting now
 
 --- 30-YEAR FIXED -----------------------------------------------
 
-  🏆 Navy Federal CU         5.625%                     BEST
+  [BEST] Navy Federal CU         5.625%                     BEST
      Wells Fargo             5.750%  (5.968% APR)
      SoFi                    5.990%
      Freddie Mac (natl avg)  6.220%  ·················· benchmark
@@ -88,11 +88,11 @@ Every lender's rate is displayed alongside these benchmarks so you can immediate
      PNC                     6.625%  (6.790% APR)
      Mr. Cooper              6.750%  (6.820% APR)
 
-  📊 Avg: 6.330%  |  vs yesterday: ▼ 0.010%
+  Avg: 6.330%  |  vs yesterday: down 0.010%
 
 --- 15-YEAR FIXED -----------------------------------------------
 
-  🏆 Navy Federal CU         5.250%                     BEST
+  [BEST] Navy Federal CU         5.250%                     BEST
      SoFi                    5.375%
      US Bank                 5.490%  (5.760% APR)
      Guaranteed Rate         5.500%  (5.919% APR)
@@ -104,7 +104,7 @@ Every lender's rate is displayed alongside these benchmarks so you can immediate
      Citi                    5.875%  (6.050% APR)
      PNC                     5.875%  (6.010% APR)
 
-  📊 Avg: 5.628%  |  vs yesterday: ▼ 0.015%
+  Avg: 5.628%  |  vs yesterday: down 0.015%
 ```
 
 ---
@@ -113,21 +113,22 @@ Every lender's rate is displayed alongside these benchmarks so you can immediate
 
 ### Install
 
+> **Note:** On Windows, use `python` instead of `python3`. On macOS/Linux, either works.
+
 ```bash
 git clone https://github.com/seang1121/Multi-Lender-Mortgage-Rate-Lookup.git
 cd Multi-Lender-Mortgage-Rate-Lookup
+
+# Create a virtual environment (recommended)
+python -m venv venv
+
+# Activate it:
+# Windows (PowerShell):  venv\Scripts\Activate.ps1
+# Windows (Git Bash):    source venv/Scripts/activate
+# macOS / Linux:         source venv/bin/activate
+
 pip install -r requirements.txt
 python -m patchright install chromium
-```
-
-### Run
-
-```bash
-# Headless mode — scrapes 6 automated lenders + 2 benchmarks
-python3 mortgage_rate_report.py
-
-# Headed mode — opens a visible browser to attempt ALL 13 lenders
-python3 mortgage_rate_report.py --headed
 ```
 
 ### Configure
@@ -136,12 +137,29 @@ Set your ZIP code in `config.json`:
 
 ```json
 {
-  "zip_code": "YOUR_ZIP",
-  "tracking": {
-    "daily_check_time": "08:00 AM EST",
-    "alert_threshold": 0.125
-  }
+  "zip_code": "90210"
 }
+```
+
+Or pass it on the command line (overrides config.json):
+
+```bash
+python mortgage_rate_report.py --zip 90210
+```
+
+If neither is set, defaults to `32224` (Jacksonville, FL).
+
+### Run
+
+```bash
+# Headless mode — scrapes 6 automated lenders + 2 benchmarks
+python mortgage_rate_report.py
+
+# Headed mode — opens a visible browser to attempt ALL 13 lenders
+python mortgage_rate_report.py --headed
+
+# Override ZIP code
+python mortgage_rate_report.py --zip 10001
 ```
 
 ---
@@ -150,9 +168,14 @@ Set your ZIP code in `config.json`:
 
 The script outputs clean text to stdout. Pipe it anywhere.
 
-### Daily cron job (runs every morning)
+### Daily cron job (macOS/Linux)
 ```bash
-0 8 * * * cd /path/to/Multi-Lender-Mortgage-Rate-Lookup && python3 mortgage_rate_report.py >> rates.log 2>&1
+0 8 * * * cd /path/to/Multi-Lender-Mortgage-Rate-Lookup && python mortgage_rate_report.py >> rates.log 2>&1
+```
+
+### Windows Task Scheduler
+```powershell
+schtasks /create /tn "MortgageRates" /tr "python C:\path\to\mortgage_rate_report.py" /sc daily /st 08:00
 ```
 
 ### Discord bot
@@ -160,7 +183,7 @@ The script outputs clean text to stdout. Pipe it anywhere.
 import subprocess
 
 output = subprocess.run(
-    ["python3", "mortgage_rate_report.py"],
+    ["python", "mortgage_rate_report.py"],
     capture_output=True, text=True
 )
 send_to_discord(channel_id, output.stdout)
@@ -168,7 +191,7 @@ send_to_discord(channel_id, output.stdout)
 
 ### Slack webhook
 ```bash
-python3 mortgage_rate_report.py | curl -X POST -H 'Content-type: application/json' \
+python mortgage_rate_report.py | curl -X POST -H 'Content-type: application/json' \
   -d "{\"text\": \"$(cat -)\"}" https://hooks.slack.com/services/YOUR/WEBHOOK/URL
 ```
 
@@ -176,7 +199,7 @@ python3 mortgage_rate_report.py | curl -X POST -H 'Content-type: application/jso
 Your agent runs the script, reads the output, and delivers it however you want — Discord, Telegram, email, SMS. The script handles all the scraping and formatting. Your agent just schedules and delivers.
 
 ```python
-result = run_command("python3 mortgage_rate_report.py")
+result = run_command("python mortgage_rate_report.py")
 post_to_channel(result)
 ```
 
@@ -195,14 +218,14 @@ Major banks like Chase, Rocket Mortgage, and Citi use aggressive anti-bot protec
 
 | Mode | Command | What happens |
 |------|---------|-------------|
-| **Headless** (default) | `python3 mortgage_rate_report.py` | Scrapes 6 automated lenders + 2 benchmarks. Blocked lenders listed at bottom for manual check. Best for cron jobs and server environments. |
-| **Headed** | `python3 mortgage_rate_report.py --headed` | Opens a **visible browser window** and attempts all 13 lenders. Banks can't tell it's automated because it looks like a real user. Requires a display (desktop/laptop). |
+| **Headless** (default) | `python mortgage_rate_report.py` | Scrapes 6 automated lenders + 2 benchmarks. Blocked lenders listed at bottom for manual check. Best for cron jobs and server environments. |
+| **Headed** | `python mortgage_rate_report.py --headed` | Opens a **visible browser window** and attempts all 13 lenders. Banks are less likely to block a visible browser. Requires a display (desktop/laptop). |
 
-In headed mode, lenders are scraped in batches of 4 to avoid overwhelming your machine. Each failed lender gets an automatic retry before being marked as unavailable.
+In headed mode, lenders are scraped in batches of 4 to avoid overwhelming your machine. Each failed lender gets automatic retries with increasing wait times before being marked as unavailable.
 
 ### For automation agents
 
-If you're running this through an AI agent (like OpenClaw, Claude Code, or a custom bot) that has access to a real browser profile, the agent can check the blocked lenders manually and merge the results into the script output. The script prints a `Need browser check:` line listing exactly which lenders still need a real browser.
+If you're running this through an AI agent that has access to a real browser profile, the agent can check the blocked lenders manually and merge the results into the script output. The script prints a `Need browser check:` line listing exactly which lenders still need a real browser.
 
 ---
 
@@ -213,7 +236,7 @@ If you're running this through an AI agent (like OpenClaw, Claude Code, or a cus
                         |
           asyncio.gather() — all in parallel
                         |
-        ┌───────────────┼───────────────┐
+        +---------------+---------------+
         |               |               |
    patchright       patchright       urllib
    (stealth)       (stealth)       (CSV API)
@@ -235,7 +258,7 @@ If you're running this through an AI agent (like OpenClaw, Claude Code, or a cus
 
 **Freddie Mac** is fetched via direct CSV API — no browser needed.
 
-**Anti-bot protected banks** (Chase, Rocket, Citi, etc.) block headless browsers. These are designed to be supplemented by your automation agent using a real browser session.
+**Anti-bot protected banks** (Chase, Rocket, Citi, etc.) block headless browsers. Use `--headed` mode to attempt these with a visible browser window.
 
 ---
 
@@ -245,7 +268,6 @@ If you're running this through an AI agent (like OpenClaw, Claude Code, or a cus
 |-----------|------|-----|
 | Python 3.10+ | Core language | Async support, modern syntax |
 | patchright | Stealth Chromium | Bypasses bot detection on bank sites |
-| scrapling | Scraping framework | Browser fingerprint spoofing |
 | asyncio | Parallelism | All lenders scraped simultaneously |
 | Freddie Mac CSV | Benchmark API | No browser needed, direct data |
 | JSON | Storage | 90-day rolling rate history |
@@ -256,13 +278,39 @@ If you're running this through an AI agent (like OpenClaw, Claude Code, or a cus
 
 ```
 Multi-Lender-Mortgage-Rate-Lookup/
-├── mortgage_rate_report.py    # Multi-lender parallel scraper (primary)
-├── mortgage_tracker.py        # Legacy single-lender tracker
-├── config.json                # Your ZIP code and settings
+├── mortgage_rate_report.py    # Multi-lender parallel scraper
+├── config.json                # Your ZIP code
 ├── requirements.txt           # Python dependencies
-├── data/                      # Rate history (gitignored)
+├── CLAUDE.md                  # Project brain for AI agents
+├── data/                      # Rate history (auto-created, gitignored)
 └── README.md
 ```
+
+---
+
+## Troubleshooting
+
+**patchright install fails or Chromium won't download**
+- Make sure you ran `python -m patchright install chromium` after installing requirements
+- On corporate networks, proxy settings may block the download. Set `HTTPS_PROXY` env var if needed
+- Try running as administrator/sudo if you get permission errors
+
+**SSL errors (`CERTIFICATE_VERIFY_FAILED`)**
+- Common on macOS. Run: `pip install certifi` and ensure your Python is using updated CA certs
+- On Windows, this is rare but can happen behind corporate firewalls
+
+**All lenders return empty results**
+- Some lenders rate-limit or block cloud IP ranges. Try again after a few minutes
+- Use `--headed` mode to see what the browser is actually loading
+- Check your internet connection and ensure no VPN is interfering
+
+**`python3` not found (Windows)**
+- Use `python` instead of `python3` on Windows
+- Make sure Python is in your PATH: `python --version` should print your version
+
+**Emoji not rendering in terminal**
+- The report uses emoji characters. Most modern terminals support them
+- If your terminal shows garbled text, redirect output to a file: `python mortgage_rate_report.py > report.txt`
 
 ---
 

@@ -26,7 +26,7 @@ Thumbs.db
 tracker.log
 
 # Historical data
-# rates_history.json
+rates_history.json
 data/
 mortgage_rates_history.json
 
