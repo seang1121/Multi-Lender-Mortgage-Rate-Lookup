@@ -83,8 +83,8 @@ ZIP 32224 | 7 lenders from 7 sources
 ## Quick Start
 
 ```bash
-git clone https://github.com/seang1121/Mortgage-Interest-Rate-Lookup.git
-cd Mortgage-Interest-Rate-Lookup
+git clone https://github.com/seang1121/Multi-Lender-Mortgage-Rate-Lookup.git
+cd Multi-Lender-Mortgage-Rate-Lookup
 pip install -r requirements.txt
 python -m patchright install chromium
 ```
@@ -133,7 +133,7 @@ Edit `config.json` to set your ZIP code:
 Schedule with cron to run Mon/Wed/Fri at 9am:
 
 ```bash
-0 9 * * 1,3,5 cd /path/to/Mortgage-Interest-Rate-Lookup && python3 mortgage_rate_report.py >> tracker.log 2>&1
+0 9 * * 1,3,5 cd /path/to/Multi-Lender-Mortgage-Rate-Lookup && python3 mortgage_rate_report.py >> tracker.log 2>&1
 ```
 
 ## Architecture
