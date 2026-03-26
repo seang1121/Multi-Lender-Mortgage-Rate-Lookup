@@ -216,6 +216,15 @@ All automated lenders are scraped simultaneously using patchright — a stealth 
 
 ---
 
+## Roadmap
+
+- **MCP Server** — Wrap as a Model Context Protocol server so any AI agent can call `get_rates(zip_code)` and receive structured rate data. Plug it into Claude, OpenAI, or any MCP-compatible platform as a live mortgage rate tool.
+- **Additional lenders** — Community-sourced URLs and API endpoints for anti-bot protected banks
+- **Rate alerts** — Push notifications when rates drop below your target
+- **Historical charting** — Visualize 90-day rate trends per lender
+
+---
+
 ## Contributing
 
 Pull requests welcome. If you find a working URL or API endpoint for any of the browser-assisted lenders, open an issue — that's the fastest way to improve coverage.
