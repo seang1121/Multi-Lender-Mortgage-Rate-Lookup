@@ -47,12 +47,12 @@ Built for anyone who wants to track the mortgage market daily without lifting a 
 ## Sample Output
 
 ```
-MORTGAGE RATE COMPARISON
-Mar 25, 2026 | 15 lenders
+🏠 MORTGAGE RATE COMPARISON — Mar 25, 2026
+   15 lenders | sorted lowest to highest
 
 --- 30-YEAR FIXED -----------------------------------------------
 
-  *  Navy Federal CU         5.625%                     BEST
+  🏆 Navy Federal CU         5.625%                     BEST
      Wells Fargo             5.750%  (5.968% APR)
      SoFi                    5.990%
      Freddie Mac (natl avg)  6.220%
@@ -68,11 +68,11 @@ Mar 25, 2026 | 15 lenders
      PNC                     6.625%  (6.790% APR)
      MND Index               6.480%
 
-     Avg: 6.330%  |  vs yesterday: DOWN 0.010%
+  📊 Avg: 6.330%  |  vs yesterday: ▼ 0.010%
 
 --- 15-YEAR FIXED -----------------------------------------------
 
-  *  Navy Federal CU         5.250%                     BEST
+  🏆 Navy Federal CU         5.250%                     BEST
      SoFi                    5.375%
      US Bank                 5.490%  (5.760% APR)
      Guaranteed Rate         5.500%  (5.919% APR)
@@ -81,7 +81,7 @@ Mar 25, 2026 | 15 lenders
      Bank of America         5.750%  (6.134% APR)
      ...
 
-     Avg: 5.628%  |  vs yesterday: DOWN 0.015%
+  📊 Avg: 5.628%  |  vs yesterday: ▼ 0.015%
 ```
 
 ---
