@@ -139,7 +139,7 @@ Or pass it on the command line (overrides config.json):
 python mortgage_rate_report.py --zip 90210
 ```
 
-If neither is set, defaults to `32224` (Jacksonville, FL).
+If neither is set, defaults to `12540` (LaGrangeville, NY).
 
 ### Run
 
