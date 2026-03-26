@@ -1,9 +1,10 @@
 # Multi-Lender Mortgage Rate Lookup
 
-**Compare mortgage rates across 15 lenders in seconds. One command. All the major banks, credit unions, and online lenders — scraped in parallel, sorted by lowest rate, with day-over-day tracking.**
+**Compare mortgage rates across 13 lenders and 2 national benchmarks — in seconds. One command. All the major banks, credit unions, and online lenders scraped in parallel, sorted by lowest rate, with day-over-day tracking.**
 
 ![Python](https://img.shields.io/badge/python-3.10+-blue)
-![Lenders](https://img.shields.io/badge/lenders-15-brightgreen)
+![Lenders](https://img.shields.io/badge/lenders-13-brightgreen)
+![Benchmarks](https://img.shields.io/badge/benchmarks-2-blue)
 ![Schedule](https://img.shields.io/badge/schedule-daily-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -13,13 +14,17 @@
 
 Shopping for mortgage rates means opening 10+ bank websites, entering your info on each one, and manually comparing. This tool does all of that in one command — hits every lender simultaneously, extracts rates, sorts them, and tells you who has the best deal today.
 
+Rates are compared against **2 national benchmarks** (Freddie Mac PMMS and Mortgage News Daily) so you can instantly see if a lender is above or below the market average.
+
 Built for anyone who wants to track the mortgage market daily without lifting a finger.
 
 ---
 
-## 15 Lenders Tracked
+## 13 Lenders + 2 National Benchmarks
 
-### Automated Scraping (runs without intervention)
+### Lenders (13)
+
+**Automated scraping** — runs without intervention:
 | Lender | Type | Products |
 |--------|------|----------|
 | Bank of America | Big 4 Bank | 30yr, 15yr |
@@ -28,10 +33,8 @@ Built for anyone who wants to track the mortgage market daily without lifting a 
 | SoFi | Online Lender | 30yr, 15yr |
 | US Bank | National Bank | 30yr, 15yr |
 | Guaranteed Rate | Online Lender | 30yr, 15yr |
-| Mortgage News Daily | Market Index | 30yr, 15yr |
-| Freddie Mac PMMS | National Benchmark | 30yr, 15yr |
 
-### Browser-Assisted (anti-bot protected — needs a real browser session)
+**Browser-assisted** — anti-bot protected, needs a real browser session:
 | Lender | Type | Products |
 |--------|------|----------|
 | Chase | Big 4 Bank | 30yr, 15yr, ARM |
@@ -42,13 +45,19 @@ Built for anyone who wants to track the mortgage market daily without lifting a 
 | Mr. Cooper | Largest Servicer | 30yr, 15yr |
 | PNC | National Bank | 30yr, 15yr |
 
+### National Benchmarks (2)
+| Source | What It Is | Update Frequency |
+|--------|-----------|-----------------|
+| Freddie Mac PMMS | Official national average from the Primary Mortgage Market Survey | Weekly |
+| Mortgage News Daily | Industry-standard daily rate index used by professionals | Daily |
+
 ---
 
 ## Sample Output
 
 ```
 🏠 MORTGAGE RATE COMPARISON — Mar 25, 2026
-   15 lenders | sorted lowest to highest
+   13 lenders + 2 benchmarks | sorted lowest to highest
 
 --- 30-YEAR FIXED -----------------------------------------------
 
