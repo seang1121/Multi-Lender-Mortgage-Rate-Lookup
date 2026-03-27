@@ -363,6 +363,16 @@ def main():
         if failed_lenders:
             print(f"⚠️ Failed: {', '.join(failed_lenders)}")
 
+    # Save latest report to file for external analysis
+    os.makedirs(DATA_DIR, exist_ok=True)
+    report_file = os.path.join(DATA_DIR, "latest_report.txt")
+    with open(report_file, "w") as f:
+        f.write(report + "\n")
+        if failures:
+            failed_lenders = [ff for ff in failures if ff not in ("Freddie Mac", "MND")]
+            if failed_lenders:
+                f.write(f"\n⚠️ Failed: {', '.join(failed_lenders)}\n")
+
     # Save history
     today_key = datetime.now().strftime("%Y-%m-%d")
     rates_by_product = {}
