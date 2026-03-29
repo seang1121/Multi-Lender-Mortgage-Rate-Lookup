@@ -1,3 +1,5 @@
+> **One command. 10 lenders. Sorted best to worst.** Stop opening a dozen bank websites — this tool checks them all in 30 seconds with stealth browser automation.
+
 # Multi-Lender Mortgage Rate Lookup
 
 > Compare mortgage rates across **10 lenders** and **2 national benchmarks** in a single command. All major banks, credit unions, and online lenders — scraped in parallel, ranked lowest to highest, with day-over-day market tracking.
