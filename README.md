@@ -336,6 +336,12 @@ Pull requests welcome. The fastest way to improve coverage:
 
 For informational purposes only. Rates are scraped from publicly available pages and may not match actual lender quotes. Always verify directly with lenders before making financial decisions.
 
+## Related Projects
+
+- **[Sports Betting MCP Server](https://github.com/seang1121/sports-betting-mcp)** — The first MCP server for sports betting. 9 tools, live odds, AI picks, 59.6% win rate.
+- **[March Madness Bracket Predictor](https://github.com/seang1121/ncaab-MarchMadness-Trend-analysis)** — 5-model ensemble, 14-year backtest, 77% accuracy. Interactive bracket generator.
+- **[Agent Command Center](https://github.com/seang1121/acc-agent-command-center)** — Dashboard that auto-discovers MCP servers, agents, hooks, cron jobs, and repos.
+
 ## License
 
 MIT
